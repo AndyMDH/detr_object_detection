@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DETR Object Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .result-container {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+        .result-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        .detection-table {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <header class="pb-3 mb-4 border-bottom">
+            <h1 class="display-5 fw-bold">DETR Object Detection</h1>
+        </header>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="p-4 mb-4 bg-light rounded-3">
+                    <h2>Upload an Image</h2>
+                    <form id="upload-form" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Select image:</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        </div>
+                        <div class="mb-3">
+                            <label for="threshold" class="form-label">Detection Threshold (0.0 - 1.0):</label>
+                            <input type="range" class="form-range" min="0" max="1" step="0.05" id="threshold" name="threshold" value="0.5">
+                            <div class="text-center" id="threshold-value">0.5</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Detect Objects</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div id="loading" style="display: none;">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <p class="text-center mt-2">Processing image...</p>
+                </div>
+                <div id="result-container" class="result-container" style="display: none;">
+                    <h3>Detection Results</h3>
+                    <img id="result-image" class="result-image" src="" alt="Detection Result">
+
+                    <div class="detection-table">
+                        <h4>Detected Objects:</h4>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Object</th>
+                                    <th>Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detections-table-body">
+                                <!-- Results will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('upload-form');
+            const thresholdSlider = document.getElementById('threshold');
+            const thresholdValue = document.getElementById('threshold-value');
+            const loading = document.getElementById('loading');
+            const resultContainer = document.getElementById('result-container');
+            const resultImage = document.getElementById('result-image');
+            const detectionsTableBody = document.getElementById('detections-table-body');
+
+            // Update threshold value display
+            thresholdSlider.addEventListener('input', function() {
+                thresholdValue.textContent = this.value;
+            });
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // Show loading spinner
+                loading.style.display = 'block';
+                resultContainer.style.display = 'none';
+
+                // Prepare form data
+                const formData = new FormData(form);
+
+                try {
+                    // Send request to the server
+                    const response = await fetch('/detect', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    // Parse response
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // Display the result image
+                        resultImage.src = data.image;
+
+                        // Clear previous detections
+                        detectionsTableBody.innerHTML = '';
+
+                        // Add detection results to the table
+                        data.detections.forEach(detection => {
+                            const row = document.createElement('tr');
+
+                            const labelCell = document.createElement('td');
+                            labelCell.textContent = detection.label;
+
+                            const confidenceCell = document.createElement('td');
+                            confidenceCell.textContent = (detection.confidence * 100).toFixed(2) + '%';
+
+                            row.appendChild(labelCell);
+                            row.appendChild(confidenceCell);
+
+                            detectionsTableBody.appendChild(row);
+                        });
+
+                        // Show results
+                        resultContainer.style.display = 'block';
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while processing the image.');
+                } finally {
+                    // Hide loading spinner
+                    loading.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
