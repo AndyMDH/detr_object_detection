@@ -1,6 +1,6 @@
 # DETR Vision Project
 
-A computer vision project for object detection using Facebook's DETR (DEtection TRansformer) model.
+A personal Computer Vision project for object detection using Facebook's DETR (DEtection TRansformer) model.
 
 ## Features
 
