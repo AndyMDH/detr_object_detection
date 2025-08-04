@@ -8,6 +8,10 @@ venv/
 ENV/
 .env
 
+# uv
+.venv/
+.uv/
+
 # Distribution / packaging
 dist/
 build/
